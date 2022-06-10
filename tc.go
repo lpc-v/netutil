@@ -109,6 +109,7 @@ func speed2Int(str string) float64 {
 func (env *Env) once(delay string, loss string) (string, float64) {
 	log.Printf("loss: %s%%, delay: %sms", loss, delay)
 	if s := env.server.tc("eth0", delay, loss, false); !s {
+		log.Println("tc error")
 		return "", 0
 	}
 	var str string
