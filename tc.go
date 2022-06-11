@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -12,6 +13,8 @@ import (
 const G = 1000
 const M = 1
 const K = 0.001
+
+const N = 10 // 测试次数
 
 type Env struct {
 	serverIP string
@@ -53,18 +56,41 @@ func _mainTC() {
 		for col := 1; col < len(input); col++ {
 			loss := input[row][0]
 			delay := input[0][col]
-			var speed string
 			var num float64
 			// 测试n次，取最大值
-			for i := 0; i < 1; i++ {
-				s, n := env.once(delay, loss)
-				if n > num {
-					num = n
-					speed = s
+			datas := make([]float64, N)
+			max := 0.0
+			min := math.MaxFloat64
+			maxIdx := 0
+			minIdx := 0
+			for i := 0; i < N; i++ {
+				_, n := env.once(delay, loss)
+				// if n > num {
+				// 	num = n
+				// 	speed = s
+				// }
+				datas[i] = n
+				if n != 0 && n > max {
+					max = n
+					maxIdx = i
+				}
+				if n != 0 && n < min {
+					min = n
+					minIdx = i
 				}
 			}
-			log.Printf("speed: %s, %.3f", speed, num)
-			input[row][col] = fmt.Sprintf("%.3f", num)
+			var sum float64
+			var div int
+			for j := 0; j < N; j++ {
+				if datas[j] == 0 || j == maxIdx || j == minIdx{
+					continue
+				}
+				sum += datas[j]
+				div++
+			}
+			res := sum / float64(div)
+			log.Printf("loss: %s, delay: %sms.speed: %.3f Mbps", loss, delay, num)
+			input[row][col] = fmt.Sprintf("%.3f", res)
 		}
 	}
 	fmt.Println(input)
