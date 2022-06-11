@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
+
 	"golang.org/x/crypto/ssh"
 )
 
@@ -48,7 +50,7 @@ func (client SSHClient) iperf3Server() error {
 // iperf3 -c x.x.x.x -t 20
 func (client SSHClient) iperf3Client(ip string, seconds string) string {
 	cmd := fmt.Sprintf("iperf3 -c %s -t %s -R", ip, seconds)
-	fmt.Println(cmd)
+	log.Println(cmd)
 	session, _ := client.c.NewSession()
 	b := bytes.Buffer{}
 	session.Stdout = &b
