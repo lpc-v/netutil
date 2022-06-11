@@ -55,6 +55,7 @@ func (client SSHClient) iperf3Client(ip string, seconds string) string {
 	b := bytes.Buffer{}
 	session.Stdout = &b
 	if err := session.Run(cmd); err != nil {
+		fmt.Println(err)
 		return ""
 	}
 	return b.String()

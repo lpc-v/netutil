@@ -140,7 +140,7 @@ func (env *Env) once(delay string, loss string) (string, float64) {
 	}
 	var str string
 	// 测试时长 20s
-	if str = env.client.iperf3Client(env.server_ip, "20"); len(str) == 0 {
+	if str = env.client.iperf3Client(env.server_ip, "10"); len(str) == 0 {
 		log.Println("iperf3 -c error")
 		return "", 0
 	}
