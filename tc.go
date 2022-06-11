@@ -51,6 +51,7 @@ func _mainTC() {
 	env := MakeEnv()
 	
 	input := ReadCSV("input/tc.csv")
+	fmt.Println("test output")
 
 	for row := 1; row < len(input[0]); row++ {
 		for col := 1; col < len(input); col++ {
