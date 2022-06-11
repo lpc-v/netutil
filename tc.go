@@ -57,7 +57,6 @@ func _mainTC() {
 		for col := 1; col < len(input); col++ {
 			loss := input[row][0]
 			delay := input[0][col]
-			var num float64
 			// 测试n次，取最大值
 			datas := make([]float64, N)
 			max := 0.0
@@ -90,7 +89,8 @@ func _mainTC() {
 				div++
 			}
 			res := sum / float64(div)
-			log.Printf("loss: %s, delay: %sms.speed: %.3f Mbps", loss, delay, num)
+			fmt.Println(datas)
+			log.Printf("loss: %s, delay: %sms. ==> speed: %.3f Mbps", loss, delay, res)
 			input[row][col] = fmt.Sprintf("%.3f", res)
 		}
 	}
