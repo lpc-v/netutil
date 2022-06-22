@@ -32,3 +32,14 @@ func TestIperf3(t *testing.T) {
 	s := client.iperf3Client("172.20.110.221", "10")
 	fmt.Println(s)
 }
+
+func TestDivide(t *testing.T) {
+	a := 9
+	b := float64(a / 2.0)
+	fmt.Printf("%T, %v", b, b)
+}
+
+func TestReadIni(t *testing.T) {
+	env := ReadIni("config.ini")
+	fmt.Println(env)
+}

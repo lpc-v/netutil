@@ -10,35 +10,32 @@ import (
 	"strings"
 	"time"
 )
+
 const G = 1000
 const M = 1
 const K = 0.001
 
-const N = 10 // 测试次数
-
 type Env struct {
-	serverIP string
-	clientIP string
-	serverPwd string
-	clientPwd string
-	server_ip string
+	serverIP   string
+	clientIP   string
+	serverPwd  string
+	clientPwd  string
+	server_ip  string
 	serverUser string
 	clientUser string
+	serverDev  string
+	clientDev  string
 
 	server SSHClient
 	client SSHClient
+
+	times int
+	unit  string
 }
 
+
 func MakeEnv() *Env {
-	en := Env{
-		serverIP : "172.23.75.44",
-		clientIP : "172.23.75.45",
-		serverPwd : "root@SFtel",
-		clientPwd : "root@SFtel",
-		server_ip : "10.0.99.1",
-		serverUser : "root",
-		clientUser : "root",
-	}
+	en := ReadIni("config.ini")
 	en.server = Make(en.serverIP, en.serverUser, en.serverPwd)
 	en.client = Make(en.clientIP, en.clientUser, en.clientPwd)
 
@@ -46,24 +43,34 @@ func MakeEnv() *Env {
 	return &en
 }
 
-
 func _mainTC() {
 	env := MakeEnv()
-	
+	log.Println("读取配置文件")
 	input := ReadCSV("input/tc.csv")
-	fmt.Println("test output")
+	log.Println("读取输入文件")
+	fmt.Println(input)
+	// 创建文件保存结果
+	filename := generateFilename("tc-iperf3")
+	file, err := os.Create(filename)
+	if err != nil {
+		log.Fatal("无法创建文件 ", err)
+	}
+	defer file.Close()
+	w := csv.NewWriter(file)
+	w.Write(input[0])
+	w.Flush()
 
-	for row := 1; row < len(input[0]); row++ {
-		for col := 1; col < len(input); col++ {
+	for row := 1; row < len(input); row++ {
+		for col := 1; col < len(input[0]); col++ {
 			loss := input[row][0]
 			delay := input[0][col]
-			// 测试n次，取最大值
-			datas := make([]float64, N)
+			// 测试n次
+			datas := make([]float64, env.times)
 			max := 0.0
 			min := math.MaxFloat64
 			maxIdx := 0
 			minIdx := 0
-			for i := 0; i < N; i++ {
+			for i := 0; i < env.times; i++ {
 				_, n := env.once(delay, loss)
 				// if n > num {
 				// 	num = n
@@ -81,8 +88,8 @@ func _mainTC() {
 			}
 			var sum float64
 			var div int
-			for j := 0; j < N; j++ {
-				if datas[j] == 0 || j == maxIdx || j == minIdx{
+			for j := 0; j < env.times; j++ {
+				if datas[j] == 0 || j == maxIdx || j == minIdx {
 					continue
 				}
 				sum += datas[j]
@@ -92,14 +99,15 @@ func _mainTC() {
 			fmt.Println(datas)
 			log.Printf("loss: %s, delay: %sms. ==> speed: %.3f Mbps", loss, delay, res)
 			input[row][col] = fmt.Sprintf("%.3f", res)
+			fmt.Println(input)
 		}
+		w.Write(input[row])
+		w.Flush()
 	}
 	fmt.Println(input)
-	filename := generateFilename("tc-iperf3")
-	writeCSV(filename, input)
 }
 
-func writeCSV(filename string, data [][]string) {
+func WriteCSV(filename string, data [][]string) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		fmt.Println("无法创建文件")
@@ -119,7 +127,8 @@ func generateFilename(basename string) string {
 	return filename
 }
 
-func speed2Int(str string) float64 {
+// unit G/M/K
+func speed2Int(str string, unit string) float64 {
 	spl := strings.Split(str, " ")
 	numStr := spl[0]
 	num, _ := strconv.ParseFloat(numStr, 32)
@@ -130,21 +139,36 @@ func speed2Int(str string) float64 {
 	} else if strings.Contains(str, "K") {
 		num = num * K
 	}
+	switch unit {
+	case "G":
+		num = num / 1000
+	case "K":
+		num = num * 1000
+	default:
+	}
 	return num
 }
 
 func (env *Env) once(delay string, loss string) (string, float64) {
+	lossint, _ := strconv.ParseFloat(loss, 64)
+	delayint, _ := strconv.ParseFloat(delay, 64)
+	halfLoss := fmt.Sprintf("%.3f", lossint/2)
+	halfdelay := fmt.Sprintf("%.3f", delayint/2)
 	log.Printf("loss: %s%%, delay: %sms", loss, delay)
-	if s := env.server.tc("vxlan1", delay, loss, false); !s {
-		log.Println("tc error")
+	if success := env.server.tc(env.serverDev, halfdelay, halfLoss, false); !success {
+		log.Println("tc server error")
+		return "", 0
+	}
+	if s := env.client.tc(env.clientDev, halfdelay, halfLoss, false); !s {
+		log.Println("tc client error")
 		return "", 0
 	}
 	var str string
-	// 测试时长 20s
+	// 测试时长 10s
 	if str = env.client.iperf3Client(env.server_ip, "10"); len(str) == 0 {
 		log.Println("iperf3 -c error")
 		return "", 0
 	}
 	speed := searchInfo(str)
-	return speed, speed2Int(speed)
+	return speed, speed2Int(speed, env.unit)
 }
