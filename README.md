@@ -1,27 +1,26 @@
-### netutil 使用说明
+### 模拟信道测速 tc + iperf3
+**server client两端都需要安装好`iperf3`, `tc`**
+#### 环境准备
+##### server side
+```shell
+$ iperf3 -s -B yourIP -D                              # yourIP 换成需要测速的ip
+$ tc qdisc add dev eth0 root netem delay 10ms loss 1% # eth0 换成需要模拟信道的网口
+```
 
->  使用平台：linux, freebsd. 软件在asset/
-
-#### 输入文件
-
-**不要改变文件格式**
-
-` ping.csv` 只需填写IP和时延测试时长即可
-
-`iperf3.csv`A-I列格式固定，可以后面添加备注，对齐即可
-
-#### 使用
-
-- netutil ping
-
-- netutil iperf3
-
-  **server和client上都需要装好iperf3**
-
-#### 输出
-
-/out/ping-*.csv
-
-/out/iperf3-*.csv
-
+##### client side
+```shell
+$ tc qdisc add dev eth0 root netem delay 10ms loss 1% # eth0 换成需要模拟信道的网口
+```
+##### 上传脚本到服务器（server, client, 或者其它能连通都行）
+```shell
+cd ~ 
+mkdir netutil && cd netutil
+# ftp上传netutil到/~/netutil
+# ftp上传config.ini到/~/netutil
+mkdir input && cd input
+# ftp上传tc.csv到/~/netutil/input
+cd ..
+mkdir out
+```
+##### conf.ini配置文件
 ![](/img/conf.png)
