@@ -1,5 +1,8 @@
 ### 模拟信道测速 tc + iperf3
 **server client两端都需要安装好`iperf3`, `tc`**
+
+#### 下载软件
+[release](https://github.com/lpc-v/netutil/releases)
 #### 环境准备
 ##### server side
 ```shell
