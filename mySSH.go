@@ -32,6 +32,15 @@ func (client SSHClient) tc(intf string, delay string, loss string, init bool) bo
 	return true
 }
 
+func (client SSHClient) ipfw(pipeNum string, loss string, delay string) bool {
+	cmd := fmt.Sprintf("ipfw pipe %s config delay %s plr %s", pipeNum, delay, loss)
+	log.Println(cmd)
+	if err := client.execute(cmd); err != nil {
+		return false
+	}
+	return true
+}
+
 // iperf3 -s
 func (client SSHClient) iperf3Server() error {
 	if err := client.execute("iperf3 -s"); err != nil {

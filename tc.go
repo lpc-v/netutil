@@ -23,16 +23,16 @@ type Env struct {
 	server_ip  string
 	serverUser string
 	clientUser string
-	serverDev  string
-	clientDev  string
 
 	server SSHClient
 	client SSHClient
 
-	times int
-	unit  string
+	times  int
+	unit   string
+	format string
+	pipein string
+	pipeout string
 }
-
 
 func MakeEnv() *Env {
 	en := ReadIni("config.ini")
@@ -70,6 +70,15 @@ func _mainTC() {
 			min := math.MaxFloat64
 			maxIdx := 0
 			minIdx := 0
+			// 设置delay loss
+			if err := env.server.ipfw(env.pipein, loss, delay); !err {
+				log.Println("ipfw error")
+				continue
+			}
+			if err := env.server.ipfw(env.pipeout, loss, delay); !err {
+				log.Println("ipfw error")
+				continue
+			}
 			for i := 0; i < env.times; i++ {
 				_, n := env.once(delay, loss)
 				// if n > num {
@@ -97,8 +106,8 @@ func _mainTC() {
 			}
 			res := sum / float64(div)
 			fmt.Println(datas)
-			log.Printf("loss: %s, delay: %sms. ==> speed: %.3f Mbps", loss, delay, res)
-			input[row][col] = fmt.Sprintf("%.3f", res)
+			log.Printf("loss: %s, delay: %sms. ==> speed: %.3f/%.3f/%.3f Mbps", loss, delay, datas[minIdx], res, datas[maxIdx])
+			input[row][col] = fmt.Sprintf("%.3f/%.3f/%.3f", datas[minIdx], res, datas[maxIdx])
 			fmt.Println(input)
 		}
 		w.Write(input[row])
@@ -150,19 +159,19 @@ func speed2Int(str string, unit string) float64 {
 }
 
 func (env *Env) once(delay string, loss string) (string, float64) {
-	lossint, _ := strconv.ParseFloat(loss, 64)
-	delayint, _ := strconv.ParseFloat(delay, 64)
-	halfLoss := fmt.Sprintf("%.3f", lossint/2)
-	halfdelay := fmt.Sprintf("%.3f", delayint/2)
-	log.Printf("loss: %s%%, delay: %sms", loss, delay)
-	if success := env.server.tc(env.serverDev, halfdelay, halfLoss, false); !success {
-		log.Println("tc server error")
-		return "", 0
-	}
-	if s := env.client.tc(env.clientDev, halfdelay, halfLoss, false); !s {
-		log.Println("tc client error")
-		return "", 0
-	}
+	// lossint, _ := strconv.ParseFloat(loss, 64)
+	// delayint, _ := strconv.ParseFloat(delay, 64)
+	// halfLoss := fmt.Sprintf("%.3f", lossint/2)
+	// halfdelay := fmt.Sprintf("%.3f", delayint/2)
+	// log.Printf("loss: %s%%, delay: %sms", loss, delay)
+	// if success := env.server.ipfw(loss, delay); !success {
+	// 	log.Println("ipfw error")
+	// 	return "", 0
+	// }
+	// if s := env.client.tc(env.clientDev, halfdelay, halfLoss, false); !s {
+	// 	log.Println("tc client error")
+	// 	return "", 0
+	// }
 	var str string
 	// 测试时长 10s
 	if str = env.client.iperf3Client(env.server_ip, "10"); len(str) == 0 {
