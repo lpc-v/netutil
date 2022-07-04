@@ -107,7 +107,11 @@ func _mainTC() {
 			res := sum / float64(div)
 			fmt.Println(datas)
 			log.Printf("loss: %s, delay: %sms. ==> speed: %.3f/%.3f/%.3f Mbps", loss, delay, datas[minIdx], res, datas[maxIdx])
-			input[row][col] = fmt.Sprintf("%.3f/%.3f/%.3f", datas[minIdx], res, datas[maxIdx])
+			if env.format == "avg" {
+				input[row][col] = fmt.Sprintf("%.3f", res)
+			} else {
+				input[row][col] = fmt.Sprintf("%.3f/%.3f/%.3f", datas[minIdx], res, datas[maxIdx])
+			}
 			fmt.Println(input)
 		}
 		w.Write(input[row])
