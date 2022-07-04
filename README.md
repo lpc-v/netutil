@@ -27,3 +27,8 @@ mkdir out
 ```
 ##### conf.ini配置文件
 ![](/img/conf_freebsd.png)
+
+
+**注意**
+`pipein` `pipeout` 都加上100ms延时，实际效果就是200ms延时
+`pipein` `pipeout` 都加上10%丢包，实际效果大约10% + 90% * 10% = 19%丢包
